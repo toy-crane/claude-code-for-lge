@@ -16,6 +16,14 @@ export function TodoApp() {
     useTodos();
   const [input, setInput] = useState("");
 
+  function handleToggle(id: string) {
+    const todo = todos.find((t) => t.id === id);
+    toggleTodo(id);
+    if (todo && !todo.completed) {
+      setTimeout(() => deleteTodo(id), 500);
+    }
+  }
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.nativeEvent.isComposing) return;
     if (e.key === "Enter") {
@@ -45,7 +53,7 @@ export function TodoApp() {
             <TodoItem
               key={todo.id}
               todo={todo}
-              onToggle={toggleTodo}
+              onToggle={handleToggle}
               onDelete={deleteTodo}
               onEdit={editTodo}
             />
