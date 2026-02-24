@@ -12,6 +12,8 @@ Next.js 16 + React 19 기반 앱. Tailwind CSS v4와 shadcn/ui(new-york 스타�
 - `bun run build` — 프로덕션 빌드
 - `bun run lint` — ESLint 실행 (flat config, core-web-vitals + typescript 규칙)
 - `bunx shadcn add <component>` — shadcn/ui 컴포넌트 추가
+- `bun run test` — Jest 테스트 실행
+- `bun run test:watch` — Jest watch 모드 실행
 
 ## 기술 스택 및 컨벤션
 
@@ -28,6 +30,14 @@ Next.js 16 + React 19 기반 앱. Tailwind CSS v4와 shadcn/ui(new-york 스타�
 - `lib/utils.ts` — 공유 유틸리티 (`cn` 클래스 병합 함수)
 - `components/` — shadcn/ui 컴포넌트 디렉토리 (`@/components`로 별칭)
 - `public/` — 정적 에셋 (SVG 파일)
+
+## 테스트
+
+- **프레임워크**: Jest 30 + React Testing Library + user-event
+- **환경**: jsdom (`jest-environment-jsdom`)
+- **설정 파일**: `jest.config.ts` (next/jest 기반), `jest.setup.ts` (`@testing-library/jest-dom` 임포트)
+- **테스트 위치**: `__tests__/` 디렉토리 또는 `*.test.(ts|tsx)`, `*.spec.(ts|tsx)` 파일
+- **실행**: `bun run test` (주의: `bun test`는 Bun 내장 러너를 사용하므로 반드시 `bun run test`로 실행)
 
 ## Rules
 - 커밋 메시지: Conventional Commits (feat:, fix:, refactor:)
