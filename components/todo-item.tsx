@@ -5,8 +5,15 @@ import { X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Todo } from "@/lib/types";
+
+const priorityConfig = {
+  high: { label: "높음", variant: "destructive" as const },
+  medium: { label: "보통", variant: "default" as const },
+  low: { label: "낮음", variant: "secondary" as const },
+};
 
 interface TodoItemProps {
   todo: Todo;
@@ -45,6 +52,8 @@ export function TodoItem({ todo, onToggle, onDelete, onEdit }: TodoItemProps) {
     }
   }
 
+  const config = priorityConfig[todo.priority ?? "medium"];
+
   if (isEditing) {
     return (
       <div className="flex items-center gap-2 px-3 py-2">
@@ -66,6 +75,9 @@ export function TodoItem({ todo, onToggle, onDelete, onEdit }: TodoItemProps) {
         checked={todo.completed}
         onCheckedChange={() => onToggle(todo.id)}
       />
+      <Badge variant={config.variant} className="shrink-0">
+        {config.label}
+      </Badge>
       <span
         className={cn(
           "flex-1 cursor-default select-none",

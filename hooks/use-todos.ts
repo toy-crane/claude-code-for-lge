@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore, useCallback } from "react";
-import type { Todo } from "@/lib/types";
+import type { Todo, Priority } from "@/lib/types";
 
 const STORAGE_KEY = "todos";
 const emptyTodos: Todo[] = [];
@@ -48,13 +48,14 @@ function writeTodos(todos: Todo[]) {
 export function useTodos() {
   const todos = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  const addTodo = useCallback((text: string) => {
+  const addTodo = useCallback((text: string, priority: Priority = "medium") => {
     const trimmed = text.trim();
     if (!trimmed) return;
     const newTodo: Todo = {
       id: crypto.randomUUID(),
       text: trimmed,
       completed: false,
+      priority,
       createdAt: Date.now(),
     };
     writeTodos([newTodo, ...getSnapshot()]);

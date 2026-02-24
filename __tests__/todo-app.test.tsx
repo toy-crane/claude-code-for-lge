@@ -89,3 +89,57 @@ describe("Todo 앱 검증 체크리스트", () => {
     expect(screen.getByText("장보기")).toBeInTheDocument();
   });
 });
+
+describe("우선순위 기능", () => {
+  test("기본 우선순위(보통)로 Todo가 추가된다", async () => {
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const input = screen.getByPlaceholderText("할 일을 입력하세요");
+    await user.type(input, "장보기");
+    await user.keyboard("{Enter}");
+
+    // Badge로 표시된 우선순위 확인 (data-slot="badge" 속성)
+    const badge = screen.getByText("보통", { selector: '[data-slot="badge"]' });
+    expect(badge).toBeInTheDocument();
+  });
+
+  test("우선순위를 높음으로 선택하면 높음 배지가 표시된다", async () => {
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    // 우선순위 선택
+    const priorityTrigger = screen.getByLabelText("우선순위");
+    await user.click(priorityTrigger);
+    const highOption = screen.getByRole("option", { name: "높음" });
+    await user.click(highOption);
+
+    // Todo 추가
+    const input = screen.getByPlaceholderText("할 일을 입력하세요");
+    await user.type(input, "긴급 작업");
+    await user.keyboard("{Enter}");
+
+    // 배지 확인
+    expect(screen.getByText("높음")).toBeInTheDocument();
+    expect(screen.getByText("긴급 작업")).toBeInTheDocument();
+  });
+
+  test("Todo 추가 후 우선순위가 보통으로 리셋된다", async () => {
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    // 우선순위를 높음으로 변경
+    const priorityTrigger = screen.getByLabelText("우선순위");
+    await user.click(priorityTrigger);
+    const highOption = screen.getByRole("option", { name: "높음" });
+    await user.click(highOption);
+
+    // Todo 추가
+    const input = screen.getByPlaceholderText("할 일을 입력하세요");
+    await user.type(input, "긴급 작업");
+    await user.keyboard("{Enter}");
+
+    // 리셋 후 셀렉트 값 확인 - 트리거 텍스트가 "보통"인지
+    expect(priorityTrigger).toHaveTextContent("보통");
+  });
+});
