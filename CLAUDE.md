@@ -28,3 +28,7 @@ Next.js 16 + React 19 기반 앱. Tailwind CSS v4와 shadcn/ui(new-york 스타�
 - `lib/utils.ts` — 공유 유틸리티 (`cn` 클래스 병합 함수)
 - `components/` — shadcn/ui 컴포넌트 디렉토리 (`@/components`로 별칭)
 - `public/` — 정적 에셋 (SVG 파일)
+
+## Rules
+- 커밋 메시지: Conventional Commits (feat:, fix:, refactor:)
+- 모든 대화에서 한글만 사용
