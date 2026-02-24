@@ -1,29 +1,36 @@
-# Claude Code for Developers
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-개발자를 위한 Claude Code 워크샵 실습 저장소입니다.
-진도를 놓치더라도 해당 챕터 브랜치로 checkout하면 언제든 따라올 수 있습니다.
+## Getting Started
 
-**강의 자료**: https://publish.obsidian.md/claude-code/cc-lge
-
-## 시작하기
+First, run the development server:
 
 ```bash
-git clone https://github.com/toy-crane/claude-code-for-lge.git
-cd claude-code-for-lge
-bun install
-bun run dev
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-## 브랜치 가이드
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-브랜치 이름은 `chXX-YY` 형식입니다. `XX`는 챕터 번호, `YY`는 레슨 번호이며, 해당 레슨 완료 시점의 코드입니다.
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-브랜치는 강의 진행에 따라 추가됩니다.
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-### 특정 챕터로 이동하기
+## Learn More
 
-```bash
-git checkout ch05-02
-bun install
-bun run dev
-```
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
