@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, CalendarDays } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,12 @@ const priorityConfig = {
   high: { label: "높음", variant: "destructive" as const },
   medium: { label: "보통", variant: "default" as const },
   low: { label: "낮음", variant: "secondary" as const },
+};
+
+const categoryConfig = {
+  업무: { label: "업무", className: "border-blue-300 text-blue-700 bg-blue-50" },
+  개인: { label: "개인", className: "border-green-300 text-green-700 bg-green-50" },
+  쇼핑: { label: "쇼핑", className: "border-purple-300 text-purple-700 bg-purple-50" },
 };
 
 interface TodoItemProps {
@@ -78,6 +84,11 @@ export function TodoItem({ todo, onToggle, onDelete, onEdit }: TodoItemProps) {
       <Badge variant={config.variant} className="shrink-0">
         {config.label}
       </Badge>
+      {todo.category && (
+        <Badge variant="outline" className={cn("shrink-0", categoryConfig[todo.category].className)}>
+          {categoryConfig[todo.category].label}
+        </Badge>
+      )}
       <span
         className={cn(
           "flex-1 cursor-default select-none",
@@ -87,6 +98,12 @@ export function TodoItem({ todo, onToggle, onDelete, onEdit }: TodoItemProps) {
       >
         {todo.text}
       </span>
+      {todo.dueDate && (
+        <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+          <CalendarDays className="h-3 w-3" />
+          {todo.dueDate}
+        </span>
+      )}
       <Button
         variant="ghost"
         size="icon"

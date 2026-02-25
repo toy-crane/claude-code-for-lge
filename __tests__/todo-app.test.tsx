@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TodoApp } from "@/components/todo-app";
 import type { Todo } from "@/lib/types";
@@ -159,7 +159,8 @@ describe("필터링 기능", () => {
     const user = userEvent.setup();
     render(<TodoApp />);
 
-    await user.click(screen.getByRole("button", { name: "전체" }));
+    const statusFilterGroup = screen.getByRole("group", { name: "상태 필터" });
+    await user.click(within(statusFilterGroup).getByRole("button", { name: "전체" }));
 
     expect(screen.getAllByRole("checkbox")).toHaveLength(5);
   });
@@ -221,9 +222,10 @@ describe("필터링 기능", () => {
     const user = userEvent.setup();
     render(<TodoApp />);
 
-    const allBtn = screen.getByRole("button", { name: "전체" });
-    const activeBtn = screen.getByRole("button", { name: "진행중" });
-    const completedBtn = screen.getByRole("button", { name: "완료" });
+    const statusFilterGroup = screen.getByRole("group", { name: "상태 필터" });
+    const allBtn = within(statusFilterGroup).getByRole("button", { name: "전체" });
+    const activeBtn = within(statusFilterGroup).getByRole("button", { name: "진행중" });
+    const completedBtn = within(statusFilterGroup).getByRole("button", { name: "완료" });
 
     // 기본 상태: 전체 활성
     expect(allBtn).toHaveAttribute("data-active", "true");
@@ -234,5 +236,310 @@ describe("필터링 기능", () => {
     expect(activeBtn).toHaveAttribute("data-active", "true");
     expect(allBtn).not.toHaveAttribute("data-active", "true");
     expect(completedBtn).not.toHaveAttribute("data-active", "true");
+  });
+});
+
+describe("마감일 기능", () => {
+  test("마감일 없이 Todo를 추가하면 정상적으로 추가되고 날짜가 표시되지 않는다", async () => {
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const input = screen.getByPlaceholderText("할 일을 입력하세요");
+    await user.type(input, "장보기");
+    await user.keyboard("{Enter}");
+
+    expect(screen.getByText("장보기")).toBeInTheDocument();
+    expect(screen.queryByText(/\d{4}-\d{2}-\d{2}/)).not.toBeInTheDocument();
+  });
+
+  test("마감일을 설정하면 Todo 목록에 날짜가 표시된다", async () => {
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const dateInput = screen.getByLabelText("마감일");
+    fireEvent.change(dateInput, { target: { value: "2026-03-15" } });
+
+    const input = screen.getByPlaceholderText("할 일을 입력하세요");
+    await user.type(input, "보고서 제출");
+    await user.keyboard("{Enter}");
+
+    expect(screen.getByText("보고서 제출")).toBeInTheDocument();
+    expect(screen.getByText("2026-03-15")).toBeInTheDocument();
+  });
+
+  test("Todo 추가 후 마감일 입력이 초기화된다", async () => {
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const dateInput = screen.getByLabelText("마감일") as HTMLInputElement;
+    fireEvent.change(dateInput, { target: { value: "2026-03-15" } });
+
+    const input = screen.getByPlaceholderText("할 일을 입력하세요");
+    await user.type(input, "보고서 제출");
+    await user.keyboard("{Enter}");
+
+    expect(dateInput.value).toBe("");
+  });
+});
+
+describe("정렬 기능", () => {
+  function seedTodosForSort() {
+    const todos: Todo[] = [
+      { id: "1", text: "다람쥐", completed: false, priority: "medium", createdAt: 1 },
+      { id: "2", text: "가나다", completed: false, priority: "high", createdAt: 2 },
+      { id: "3", text: "바나나", completed: false, priority: "low", createdAt: 3 },
+      { id: "4", text: "아이스크림", completed: false, priority: "medium", createdAt: 4 },
+      { id: "5", text: "나비", completed: false, priority: "high", createdAt: 5 },
+    ];
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }
+
+  test("이름순 정렬: 가나다순으로 표시된다", async () => {
+    seedTodosForSort();
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const sortTrigger = screen.getByLabelText("정렬");
+    await user.click(sortTrigger);
+    const nameOption = screen.getByRole("option", { name: "이름순" });
+    await user.click(nameOption);
+
+    const items = screen.getAllByRole("checkbox");
+    const texts = items.map((item) => {
+      const container = item.closest(".group");
+      return container?.querySelector("span.flex-1")?.textContent;
+    });
+    expect(texts).toEqual(["가나다", "나비", "다람쥐", "바나나", "아이스크림"]);
+  });
+
+  test("생성일순 정렬: 최신 항목이 먼저 표시된다", async () => {
+    seedTodosForSort();
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    // 기본값이 생성일순
+    const items = screen.getAllByRole("checkbox");
+    const texts = items.map((item) => {
+      const container = item.closest(".group");
+      return container?.querySelector("span.flex-1")?.textContent;
+    });
+    expect(texts).toEqual(["나비", "아이스크림", "바나나", "가나다", "다람쥐"]);
+  });
+
+  test("정렬 셀렉트에 현재 정렬 기준이 표시된다", async () => {
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const sortTrigger = screen.getByLabelText("정렬");
+    expect(sortTrigger).toHaveTextContent("생성일순");
+
+    await user.click(sortTrigger);
+    const nameOption = screen.getByRole("option", { name: "이름순" });
+    await user.click(nameOption);
+
+    expect(sortTrigger).toHaveTextContent("이름순");
+  });
+});
+
+describe("마감일순 정렬 기능", () => {
+  function seedTodosWithDueDates() {
+    const todos: Todo[] = [
+      { id: "1", text: "회의 준비", completed: false, priority: "high", createdAt: 1, dueDate: "2026-03-20" },
+      { id: "2", text: "보고서 작성", completed: false, priority: "medium", createdAt: 2, dueDate: "2026-03-10" },
+      { id: "3", text: "운동하기", completed: false, priority: "low", createdAt: 3 },
+      { id: "4", text: "장보기", completed: false, priority: "medium", createdAt: 4, dueDate: "2026-03-15" },
+      { id: "5", text: "독서", completed: false, priority: "low", createdAt: 5 },
+    ];
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }
+
+  test("마감일순 정렬: 마감일이 가까운 항목이 먼저 표시된다", async () => {
+    seedTodosWithDueDates();
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const sortTrigger = screen.getByLabelText("정렬");
+    await user.click(sortTrigger);
+    const dueDateOption = screen.getByRole("option", { name: "마감일순" });
+    await user.click(dueDateOption);
+
+    const items = screen.getAllByRole("checkbox");
+    const texts = items.map((item) => {
+      const container = item.closest(".group");
+      return container?.querySelector("span.flex-1")?.textContent;
+    });
+    expect(texts[0]).toBe("보고서 작성");
+    expect(texts[1]).toBe("장보기");
+    expect(texts[2]).toBe("회의 준비");
+  });
+
+  test("마감일순 정렬: 마감일이 없는 항목은 마지막에 표시된다", async () => {
+    seedTodosWithDueDates();
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const sortTrigger = screen.getByLabelText("정렬");
+    await user.click(sortTrigger);
+    const dueDateOption = screen.getByRole("option", { name: "마감일순" });
+    await user.click(dueDateOption);
+
+    const items = screen.getAllByRole("checkbox");
+    const texts = items.map((item) => {
+      const container = item.closest(".group");
+      return container?.querySelector("span.flex-1")?.textContent;
+    });
+    expect(texts[3]).toBe("운동하기");
+    expect(texts[4]).toBe("독서");
+  });
+});
+
+describe("검색 기능", () => {
+  function seedTodosForSearch() {
+    const todos: Todo[] = [
+      { id: "1", text: "팀 회의 준비", completed: false, priority: "high", createdAt: 1 },
+      { id: "2", text: "장보기", completed: false, priority: "medium", createdAt: 2 },
+      { id: "3", text: "회의록 작성", completed: false, priority: "low", createdAt: 3 },
+      { id: "4", text: "운동하기", completed: false, priority: "medium", createdAt: 4 },
+      { id: "5", text: "보고서 작성", completed: false, priority: "high", createdAt: 5 },
+    ];
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }
+
+  test("검색어 '회의'를 입력하면 회의가 포함된 항목만 표시된다", async () => {
+    seedTodosForSearch();
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const searchInput = screen.getByPlaceholderText("검색어를 입력하세요");
+    await user.type(searchInput, "회의");
+
+    const items = screen.getAllByRole("checkbox");
+    expect(items).toHaveLength(2);
+    expect(screen.getByText("팀 회의 준비")).toBeInTheDocument();
+    expect(screen.getByText("회의록 작성")).toBeInTheDocument();
+  });
+
+  test("검색어를 지우면 전체 목록이 복원된다", async () => {
+    seedTodosForSearch();
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const searchInput = screen.getByPlaceholderText("검색어를 입력하세요");
+    await user.type(searchInput, "회의");
+    expect(screen.getAllByRole("checkbox")).toHaveLength(2);
+
+    await user.clear(searchInput);
+    expect(screen.getAllByRole("checkbox")).toHaveLength(5);
+  });
+});
+
+describe("카테고리 태그 기능", () => {
+  test("카테고리 없이 Todo를 추가하면 카테고리 배지가 표시되지 않는다", async () => {
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const input = screen.getByPlaceholderText("할 일을 입력하세요");
+    await user.type(input, "장보기");
+    await user.keyboard("{Enter}");
+
+    expect(screen.getByText("장보기")).toBeInTheDocument();
+    // 카테고리 배지(variant="outline")가 Todo 아이템 안에 없는지 확인
+    const todoItem = screen.getByText("장보기").closest(".group");
+    expect(todoItem).not.toBeNull();
+    expect(within(todoItem!).queryByText("업무")).not.toBeInTheDocument();
+    expect(within(todoItem!).queryByText("개인")).not.toBeInTheDocument();
+    expect(within(todoItem!).queryByText("쇼핑")).not.toBeInTheDocument();
+  });
+
+  test("업무 카테고리를 선택하면 Todo에 업무 태그가 표시된다", async () => {
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const categoryTrigger = screen.getByLabelText("카테고리");
+    await user.click(categoryTrigger);
+    const workOption = screen.getByRole("option", { name: "업무" });
+    await user.click(workOption);
+
+    const input = screen.getByPlaceholderText("할 일을 입력하세요");
+    await user.type(input, "보고서 작성");
+    await user.keyboard("{Enter}");
+
+    expect(screen.getByText("보고서 작성")).toBeInTheDocument();
+    const todoItem = screen.getByText("보고서 작성").closest(".group");
+    expect(within(todoItem!).getByText("업무")).toBeInTheDocument();
+  });
+
+  test("Todo 추가 후 카테고리 선택이 초기화된다", async () => {
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const categoryTrigger = screen.getByLabelText("카테고리");
+    await user.click(categoryTrigger);
+    const workOption = screen.getByRole("option", { name: "업무" });
+    await user.click(workOption);
+
+    const input = screen.getByPlaceholderText("할 일을 입력하세요");
+    await user.type(input, "보고서 작성");
+    await user.keyboard("{Enter}");
+
+    expect(categoryTrigger).toHaveTextContent("없음");
+  });
+});
+
+describe("카테고리 필터 기능", () => {
+  function seedTodosWithCategories() {
+    const todos: Todo[] = [
+      { id: "1", text: "보고서 작성", completed: false, priority: "high", createdAt: 1, category: "업무" },
+      { id: "2", text: "장보기", completed: false, priority: "medium", createdAt: 2, category: "쇼핑" },
+      { id: "3", text: "운동하기", completed: false, priority: "low", createdAt: 3, category: "개인" },
+      { id: "4", text: "회의 준비", completed: false, priority: "medium", createdAt: 4, category: "업무" },
+      { id: "5", text: "독서", completed: false, priority: "low", createdAt: 5 },
+    ];
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }
+
+  test("업무 카테고리 필터: 업무 태그가 있는 항목만 표시된다", async () => {
+    seedTodosWithCategories();
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const categoryFilterGroup = screen.getByRole("group", { name: "카테고리 필터" });
+    const workBtn = within(categoryFilterGroup).getByRole("button", { name: "업무" });
+    await user.click(workBtn);
+
+    expect(screen.getAllByRole("checkbox")).toHaveLength(2);
+    expect(screen.getByText("보고서 작성")).toBeInTheDocument();
+    expect(screen.getByText("회의 준비")).toBeInTheDocument();
+  });
+
+  test("전체 카테고리 필터: 모든 항목이 표시된다", async () => {
+    seedTodosWithCategories();
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const categoryFilterGroup = screen.getByRole("group", { name: "카테고리 필터" });
+    const workBtn = within(categoryFilterGroup).getByRole("button", { name: "업무" });
+    await user.click(workBtn);
+    expect(screen.getAllByRole("checkbox")).toHaveLength(2);
+
+    const allBtn = within(categoryFilterGroup).getByRole("button", { name: "전체" });
+    await user.click(allBtn);
+    expect(screen.getAllByRole("checkbox")).toHaveLength(5);
+  });
+
+  test("카테고리 필터 활성 스타일: 선택된 버튼에 data-active 속성이 있다", async () => {
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const categoryFilterGroup = screen.getByRole("group", { name: "카테고리 필터" });
+    const allBtn = within(categoryFilterGroup).getByRole("button", { name: "전체" });
+    const workBtn = within(categoryFilterGroup).getByRole("button", { name: "업무" });
+
+    expect(allBtn).toHaveAttribute("data-active", "true");
+    expect(workBtn).not.toHaveAttribute("data-active", "true");
+
+    await user.click(workBtn);
+    expect(workBtn).toHaveAttribute("data-active", "true");
+    expect(allBtn).not.toHaveAttribute("data-active", "true");
   });
 });
