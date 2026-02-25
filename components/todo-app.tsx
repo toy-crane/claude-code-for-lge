@@ -15,22 +15,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { useTodos } from "@/hooks/use-todos";
 import { TodoItem } from "@/components/todo-item";
-import type { Priority } from "@/lib/types";
+import type { Priority, FilterType } from "@/lib/types";
 
 export function TodoApp() {
   const { todos, isLoaded, addTodo, toggleTodo, deleteTodo, editTodo } =
     useTodos();
   const [input, setInput] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
+  const [filter, setFilter] = useState<FilterType>("all");
 
   function handleToggle(id: string) {
-    const todo = todos.find((t) => t.id === id);
     toggleTodo(id);
-    if (todo && !todo.completed) {
-      setTimeout(() => deleteTodo(id), 500);
-    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -41,6 +39,13 @@ export function TodoApp() {
       setPriority("medium");
     }
   }
+
+  const filteredTodos =
+    filter === "all"
+      ? todos
+      : filter === "active"
+        ? todos.filter((t) => !t.completed)
+        : todos.filter((t) => t.completed);
 
   if (!isLoaded) {
     return null;
@@ -70,16 +75,37 @@ export function TodoApp() {
             </SelectContent>
           </Select>
         </div>
+        <div className="flex gap-2">
+          {([["all", "전체"], ["active", "진행중"], ["completed", "완료"]] as const).map(
+            ([value, label]) => (
+              <Button
+                key={value}
+                variant={filter === value ? "default" : "outline"}
+                size="sm"
+                data-active={filter === value ? "true" : undefined}
+                onClick={() => setFilter(value)}
+              >
+                {label}
+              </Button>
+            )
+          )}
+        </div>
         <div className="flex flex-col divide-y">
-          {todos.map((todo) => (
-            <TodoItem
-              key={todo.id}
-              todo={todo}
-              onToggle={handleToggle}
-              onDelete={deleteTodo}
-              onEdit={editTodo}
-            />
-          ))}
+          {filteredTodos.length === 0 ? (
+            <p className="py-4 text-center text-muted-foreground">
+              할 일이 없습니다
+            </p>
+          ) : (
+            filteredTodos.map((todo) => (
+              <TodoItem
+                key={todo.id}
+                todo={todo}
+                onToggle={handleToggle}
+                onDelete={deleteTodo}
+                onEdit={editTodo}
+              />
+            ))
+          )}
         </div>
       </CardContent>
     </Card>
