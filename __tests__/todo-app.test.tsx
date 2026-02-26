@@ -670,4 +670,30 @@ describe("서브태스크 통합 테스트", () => {
 
     expect(screen.getByText("0/1")).toBeInTheDocument();
   });
+
+  test("서브태스크에 드래그 핸들이 표시된다", async () => {
+    const todo = {
+      id: "todo-1",
+      text: "프로젝트 기획",
+      completed: false,
+      priority: "medium",
+      createdAt: Date.now(),
+      subtasks: [
+        { id: "sub-1", text: "작업 A", completed: false, order: 0 },
+        { id: "sub-2", text: "작업 B", completed: false, order: 1 },
+        { id: "sub-3", text: "작업 C", completed: false, order: 2 },
+      ],
+    };
+    localStorage.setItem("todos", JSON.stringify([todo]));
+
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const expandButton = screen.getByRole("button", { name: /펼치기/ });
+    await user.click(expandButton);
+
+    // 드래그 핸들이 각 서브태스크에 존재하는지 확인
+    const dragHandles = screen.getAllByTestId("drag-handle");
+    expect(dragHandles).toHaveLength(3);
+  });
 });

@@ -7,6 +7,20 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import type { DragEndEvent } from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { cn } from "@/lib/utils";
 import { SubtaskItem } from "@/components/subtask-item";
 import type { Todo } from "@/lib/types";
@@ -31,11 +45,12 @@ interface TodoItemProps {
   onAddSubtask: (todoId: string, text: string) => void;
   onToggleSubtask: (todoId: string, subtaskId: string) => void;
   onDeleteSubtask: (todoId: string, subtaskId: string) => void;
+  onReorderSubtasks: (todoId: string, subtaskIds: string[]) => void;
 }
 
 export function TodoItem({
   todo, onToggle, onDelete, onEdit,
-  onAddSubtask, onToggleSubtask, onDeleteSubtask,
+  onAddSubtask, onToggleSubtask, onDeleteSubtask, onReorderSubtasks,
 }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
@@ -82,6 +97,29 @@ export function TodoItem({
     if (e.nativeEvent.isComposing) return;
     if (e.key === "Enter") handleAddSubtask();
     if (e.key === "Escape") setSubtaskInput("");
+  }
+
+  // 드래그 앤 드롭 센서
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const sorted = [...subtasks].sort((a, b) => a.order - b.order);
+    const oldIndex = sorted.findIndex((s) => s.id === active.id);
+    const newIndex = sorted.findIndex((s) => s.id === over.id);
+
+    const newOrder = [...sorted];
+    const [moved] = newOrder.splice(oldIndex, 1);
+    newOrder.splice(newIndex, 0, moved);
+
+    onReorderSubtasks(todo.id, newOrder.map((s) => s.id));
   }
 
   const config = priorityConfig[todo.priority ?? "medium"];
@@ -169,17 +207,24 @@ export function TodoItem({
       {/* 서브태스크 영역 (펼침 시) */}
       {isExpanded && (
         <div className="ml-4 border-l-2 border-muted">
-          {/* 서브태스크 목록 */}
-          {[...subtasks]
-            .sort((a, b) => a.order - b.order)
-            .map((subtask) => (
-              <SubtaskItem
-                key={subtask.id}
-                subtask={subtask}
-                onToggle={() => onToggleSubtask(todo.id, subtask.id)}
-                onDelete={() => onDeleteSubtask(todo.id, subtask.id)}
-              />
-            ))}
+          {/* 서브태스크 목록 (드래그 앤 드롭) */}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext
+              items={[...subtasks].sort((a, b) => a.order - b.order).map((s) => s.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {[...subtasks]
+                .sort((a, b) => a.order - b.order)
+                .map((subtask) => (
+                  <SubtaskItem
+                    key={subtask.id}
+                    subtask={subtask}
+                    onToggle={() => onToggleSubtask(todo.id, subtask.id)}
+                    onDelete={() => onDeleteSubtask(todo.id, subtask.id)}
+                  />
+                ))}
+            </SortableContext>
+          </DndContext>
 
           {/* 서브태스크 추가 입력 */}
           <div className="flex items-center gap-2 py-1 pl-8">

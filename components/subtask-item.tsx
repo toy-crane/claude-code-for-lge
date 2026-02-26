@@ -1,7 +1,9 @@
 "use client";
 
-// 개별 서브태스크 항목 컴포넌트
-import { Trash2 } from "lucide-react";
+// 개별 서브태스크 항목 컴포넌트 (드래그 앤 드롭 지원)
+import { Trash2, GripVertical } from "lucide-react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -14,8 +16,30 @@ interface SubtaskItemProps {
 }
 
 export function SubtaskItem({ subtask, onToggle, onDelete }: SubtaskItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: subtask.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
-    <div className="group flex items-center gap-2 py-1 pl-8">
+    <div ref={setNodeRef} style={style} className="group flex items-center gap-2 py-1 pl-8">
+      <button
+        className="cursor-grab touch-none text-muted-foreground"
+        data-testid="drag-handle"
+        aria-label="드래그"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-3 w-3" />
+      </button>
       <Checkbox
         checked={subtask.completed}
         onCheckedChange={onToggle}

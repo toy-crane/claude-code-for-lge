@@ -24,7 +24,7 @@ export function TodoApp() {
   const {
     todos, isLoaded,
     addTodo, toggleTodo, deleteTodo, editTodo,
-    addSubtask, toggleSubtask, deleteSubtask,
+    addSubtask, toggleSubtask, deleteSubtask, reorderSubtasks,
   } = useTodos();
   const [input, setInput] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
@@ -195,6 +195,7 @@ export function TodoApp() {
                 onAddSubtask={addSubtask}
                 onToggleSubtask={toggleSubtask}
                 onDeleteSubtask={deleteSubtask}
+                onReorderSubtasks={reorderSubtasks}
               />
             ))
           )}
