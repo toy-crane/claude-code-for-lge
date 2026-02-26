@@ -570,3 +570,104 @@ describe("카테고리 필터 기능", () => {
     expect(allBtn).not.toHaveAttribute("data-active", "true");
   });
 });
+
+describe("서브태스크 통합 테스트", () => {
+  test("서브태스크를 추가하면 진행률이 표시된다", async () => {
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    // 부모 Todo 추가
+    const input = screen.getByPlaceholderText("할 일을 입력하세요");
+    await user.type(input, "프로젝트 기획");
+    await user.keyboard("{Enter}");
+
+    // 펼침 버튼 클릭
+    const expandButton = screen.getByRole("button", { name: /펼치기/ });
+    await user.click(expandButton);
+
+    // 서브태스크 추가
+    const subtaskInput = screen.getByPlaceholderText("서브태스크 입력");
+    await user.type(subtaskInput, "목차 정리");
+    const addButton = screen.getByRole("button", { name: "추가" });
+    await user.click(addButton);
+
+    expect(screen.getByText("목차 정리")).toBeInTheDocument();
+    expect(screen.getByText("0/1")).toBeInTheDocument();
+  });
+
+  test("서브태스크 체크박스를 클릭하면 진행률이 갱신된다", async () => {
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const input = screen.getByPlaceholderText("할 일을 입력하세요");
+    await user.type(input, "프로젝트 기획");
+    await user.keyboard("{Enter}");
+
+    const expandButton = screen.getByRole("button", { name: /펼치기/ });
+    await user.click(expandButton);
+
+    const subtaskInput = screen.getByPlaceholderText("서브태스크 입력");
+    const addButton = screen.getByRole("button", { name: "추가" });
+    await user.type(subtaskInput, "목차 정리");
+    await user.click(addButton);
+
+    // 서브태스크 체크
+    const subtaskCheckbox = screen.getByRole("checkbox", { name: /목차 정리 완료/ });
+    await user.click(subtaskCheckbox);
+
+    expect(screen.getByText("1/1")).toBeInTheDocument();
+  });
+
+  test("부모 Todo 완료 시 모든 서브태스크가 자동 완료된다", async () => {
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const input = screen.getByPlaceholderText("할 일을 입력하세요");
+    await user.type(input, "프로젝트 기획");
+    await user.keyboard("{Enter}");
+
+    const expandButton = screen.getByRole("button", { name: /펼치기/ });
+    await user.click(expandButton);
+
+    const subtaskInput = screen.getByPlaceholderText("서브태스크 입력");
+    const addButton = screen.getByRole("button", { name: "추가" });
+    await user.type(subtaskInput, "목차 정리");
+    await user.click(addButton);
+    await user.type(subtaskInput, "참고자료 수집");
+    await user.click(addButton);
+
+    // 부모 Todo의 체크박스 클릭 (서브태스크 체크박스가 아닌 부모 체크박스)
+    const checkboxes = screen.getAllByRole("checkbox");
+    // 첫 번째 체크박스가 부모 Todo의 체크박스
+    await user.click(checkboxes[0]);
+
+    expect(screen.getByText("2/2")).toBeInTheDocument();
+  });
+
+  test("서브태스크를 삭제하면 진행률이 갱신된다", async () => {
+    const user = userEvent.setup();
+    render(<TodoApp />);
+
+    const input = screen.getByPlaceholderText("할 일을 입력하세요");
+    await user.type(input, "프로젝트 기획");
+    await user.keyboard("{Enter}");
+
+    const expandButton = screen.getByRole("button", { name: /펼치기/ });
+    await user.click(expandButton);
+
+    const subtaskInput = screen.getByPlaceholderText("서브태스크 입력");
+    const addButton = screen.getByRole("button", { name: "추가" });
+    await user.type(subtaskInput, "목차 정리");
+    await user.click(addButton);
+    await user.type(subtaskInput, "참고자료 수집");
+    await user.click(addButton);
+
+    expect(screen.getByText("0/2")).toBeInTheDocument();
+
+    // 서브태스크 삭제
+    const deleteButton = screen.getByRole("button", { name: /목차 정리 삭제/ });
+    await user.click(deleteButton);
+
+    expect(screen.getByText("0/1")).toBeInTheDocument();
+  });
+});

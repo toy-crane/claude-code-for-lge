@@ -21,8 +21,11 @@ import { TodoItem } from "@/components/todo-item";
 import type { Priority, FilterType, SortType, Category, CategoryFilter } from "@/lib/types";
 
 export function TodoApp() {
-  const { todos, isLoaded, addTodo, toggleTodo, deleteTodo, editTodo } =
-    useTodos();
+  const {
+    todos, isLoaded,
+    addTodo, toggleTodo, deleteTodo, editTodo,
+    addSubtask, toggleSubtask, deleteSubtask,
+  } = useTodos();
   const [input, setInput] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
   const [filter, setFilter] = useState<FilterType>("all");
@@ -189,6 +192,9 @@ export function TodoApp() {
                 onToggle={handleToggle}
                 onDelete={deleteTodo}
                 onEdit={editTodo}
+                onAddSubtask={addSubtask}
+                onToggleSubtask={toggleSubtask}
+                onDeleteSubtask={deleteSubtask}
               />
             ))
           )}
