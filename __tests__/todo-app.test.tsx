@@ -341,7 +341,6 @@ describe("정렬 기능", () => {
 
   test("생성일순 정렬: 최신 항목이 먼저 표시된다", async () => {
     seedTodosForSort();
-    const user = userEvent.setup();
     render(<TodoApp />);
 
     // 기본값이 생성일순
