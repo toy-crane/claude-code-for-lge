@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore, useCallback } from "react";
-import type { Todo, Priority, Category } from "@/lib/types";
+import type { Todo, SubTask, Priority, Category } from "@/lib/types";
 
 interface AddTodoOptions {
   text: string;
@@ -73,9 +73,17 @@ export function useTodos() {
 
   const toggleTodo = useCallback((id: string) => {
     writeTodos(
-      getSnapshot().map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
+      getSnapshot().map((todo) => {
+        if (todo.id !== id) return todo;
+        const newCompleted = !todo.completed;
+        return {
+          ...todo,
+          completed: newCompleted,
+          subtasks: newCompleted
+            ? todo.subtasks.map((s) => ({ ...s, completed: true }))
+            : todo.subtasks,
+        };
+      })
     );
   }, []);
 
@@ -93,5 +101,77 @@ export function useTodos() {
     );
   }, []);
 
-  return { todos, isLoaded: true, addTodo, toggleTodo, deleteTodo, editTodo };
+  const addSubtask = useCallback((todoId: string, text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    writeTodos(
+      getSnapshot().map((todo) =>
+        todo.id === todoId
+          ? {
+              ...todo,
+              subtasks: [
+                ...todo.subtasks,
+                {
+                  id: crypto.randomUUID(),
+                  text: trimmed,
+                  completed: false,
+                  order: todo.subtasks.length,
+                },
+              ],
+            }
+          : todo
+      )
+    );
+  }, []);
+
+  const toggleSubtask = useCallback((todoId: string, subtaskId: string) => {
+    writeTodos(
+      getSnapshot().map((todo) =>
+        todo.id === todoId
+          ? {
+              ...todo,
+              subtasks: todo.subtasks.map((s) =>
+                s.id === subtaskId ? { ...s, completed: !s.completed } : s
+              ),
+            }
+          : todo
+      )
+    );
+  }, []);
+
+  const deleteSubtask = useCallback((todoId: string, subtaskId: string) => {
+    writeTodos(
+      getSnapshot().map((todo) =>
+        todo.id === todoId
+          ? {
+              ...todo,
+              subtasks: todo.subtasks
+                .filter((s) => s.id !== subtaskId)
+                .map((s, i) => ({ ...s, order: i })),
+            }
+          : todo
+      )
+    );
+  }, []);
+
+  const reorderSubtasks = useCallback((todoId: string, subtaskIds: string[]) => {
+    writeTodos(
+      getSnapshot().map((todo) => {
+        if (todo.id !== todoId) return todo;
+        const reordered = subtaskIds
+          .map((id, i) => {
+            const subtask = todo.subtasks.find((s) => s.id === id);
+            return subtask ? { ...subtask, order: i } : null;
+          })
+          .filter((s): s is SubTask => s !== null);
+        return { ...todo, subtasks: reordered };
+      })
+    );
+  }, []);
+
+  return {
+    todos, isLoaded: true,
+    addTodo, toggleTodo, deleteTodo, editTodo,
+    addSubtask, toggleSubtask, deleteSubtask, reorderSubtasks,
+  };
 }
