@@ -34,3 +34,4 @@ Next.js 16 + React 19 기반 앱. Tailwind CSS v4와 shadcn/ui(new-york 스타�
 ## Rules
 - 모든 대화에서 한글만 사용
 - 매 세션 시작 시 첫 응답에 "안녕하세요"라고 인사할 것
+- 매 세션 종료 시 마지막 응답에 "감사합니다"라고 인사할 것
