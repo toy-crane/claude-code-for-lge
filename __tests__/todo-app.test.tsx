@@ -1,10 +1,37 @@
 import { render, screen, within, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TodoApp } from "@/components/todo-app";
-import type { Todo } from "@/lib/types";
+import type { Todo, SubTask } from "@/lib/types";
 
 beforeEach(() => {
   localStorage.clear();
+});
+
+describe("SubTask 타입", () => {
+  test("SubTask 객체를 생성할 수 있다", () => {
+    const subtask: SubTask = {
+      id: "sub-1",
+      text: "하위 작업",
+      completed: false,
+      order: 0,
+    };
+    expect(subtask.id).toBe("sub-1");
+    expect(subtask.text).toBe("하위 작업");
+    expect(subtask.completed).toBe(false);
+    expect(subtask.order).toBe(0);
+  });
+
+  test("Todo 객체에 subtasks 배열이 포함된다", () => {
+    const todo: Todo = {
+      id: "1",
+      text: "부모 할일",
+      completed: false,
+      priority: "medium",
+      createdAt: Date.now(),
+      subtasks: [],
+    };
+    expect(todo.subtasks).toEqual([]);
+  });
 });
 
 describe("Todo 앱 검증 체크리스트", () => {

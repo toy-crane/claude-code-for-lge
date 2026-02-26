@@ -66,6 +66,7 @@ export function useTodos() {
       createdAt: Date.now(),
       ...(dueDate ? { dueDate } : {}),
       ...(category ? { category } : {}),
+      subtasks: [],
     };
     writeTodos([newTodo, ...getSnapshot()]);
   }, []);
