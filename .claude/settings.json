@@ -1,5 +1,4 @@
 {
-  "plansDirectory": "./.claude/plans",
   "env": {
     "CLAUDE_CODE_TASK_LIST_ID": "todo-app"
   },
@@ -17,5 +16,9 @@
         ]
       }
     ]
+  },
+  "plansDirectory": "./.claude/plans",
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true
   }
 }
